@@ -1,7 +1,7 @@
 (ns acme-auth.service
   (:require [acme-auth.store :as store]
             [buddy.hashers :as hs]
-            [buddy.sign.generic :as sign]
+            [buddy.sign.util :as util]
             [buddy.sign.jws :as jws]
             [buddy.core.keys :as ks]
             [clj-time.core :as t]
@@ -37,16 +37,16 @@
   (jws/unsign token (pub-key auth-conf)))
 
 (defn- make-auth-token [auth-conf user]
-  (let [exp (-> (t/plus (t/now) (t/minutes 30)) (jws/to-timestamp))]
+  (let [exp (-> (t/plus (t/now) (t/minutes 30)) (util/to-timestamp))]
     (jws/sign {:user (dissoc user :password)}
               (priv-key auth-conf)
               {:alg :rs256 :exp exp})))
 
 (defn- make-refresh-token! [conn auth-conf user]
-  (let [iat (jws/to-timestamp (t/now))
+  (let [iat (util/to-timestamp (t/now))
         token (jws/sign {:user-id (:id user)}
                         (priv-key auth-conf)
-                        {:alg :rs256 :iat iat :exp (-> (t/plus (t/now) (t/days 30)) (jws/to-timestamp))})]
+                        {:alg :rs256 :iat iat :exp (-> (t/plus (t/now) (t/days 30)) (util/to-timestamp))})]
 
     (store/add-refresh-token! conn {:user_id (:id user)
                                     :issued iat
