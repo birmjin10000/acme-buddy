@@ -13,7 +13,6 @@
 (defn add-user! [ds user]
   (store/add-user! ds (update-in user [:password] #(hs/encrypt %))))
 
-
 (defn auth-user [conn credentials]
   (let [user (store/find-user-by-username conn (:username credentials))
         unauthed [false {:message "Invalid username or password"}]]
@@ -32,7 +31,6 @@
   (ks/public-key
    (io/resource (:pubkey auth-conf))))
 
-
 (defn- unsign-token [auth-conf token]
   (jws/unsign token (pub-key auth-conf)))
 
@@ -40,13 +38,13 @@
   (let [exp (-> (t/plus (t/now) (t/minutes 30)) (util/to-timestamp))]
     (jws/sign {:user (dissoc user :password)}
               (priv-key auth-conf)
-              {:alg :rs256 :exp exp})))
+              {:alg :rs256 :typ :jws :exp exp})))
 
 (defn- make-refresh-token! [conn auth-conf user]
   (let [iat (util/to-timestamp (t/now))
         token (jws/sign {:user-id (:id user)}
                         (priv-key auth-conf)
-                        {:alg :rs256 :iat iat :exp (-> (t/plus (t/now) (t/days 30)) (util/to-timestamp))})]
+                        {:alg :rs256 :typ :jws :iat iat :exp (-> (t/plus (t/now) (t/days 30)) (util/to-timestamp))})]
 
     (store/add-refresh-token! conn {:user_id (:id user)
                                     :issued iat
@@ -56,7 +54,6 @@
 (defn make-token-pair! [conn auth-conf user]
   {:token-pair {:auth-token (make-auth-token auth-conf user)
                 :refresh-token (make-refresh-token! conn auth-conf user)}})
-
 
 (defn create-auth-token [ds auth-conf credentials]
   (jdbc/with-db-transaction [conn ds]
@@ -77,7 +74,6 @@
           [false {:message "Refresh token revoked/deleted or new refresh token already created"}])))
     [false {:message "Invalid or expired refresh token provided"}]))
 
-
 (defn invalidate-refresh-token [ds auth-conf refresh-token]
   (let [unsigned (unsign-token auth-conf refresh-token)]
     (if unsigned
@@ -86,3 +82,4 @@
           (store/invalidate-token! conn (:user-id unsigned) (:issued unsigned)))
         [true {:message "Invalidated succssfully"}])
       [false {:message "Invalid or expired refresh token provided"}])))
+
