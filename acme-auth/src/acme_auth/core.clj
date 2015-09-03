@@ -8,22 +8,17 @@
             [acme-auth.bootstrap :refer [create-db seed]]
             [acme-auth.handlers :as handlers]))
 
-
-
-
 (defn bootstrap []
   (println "Bootstrapping....")
   (let [ds (get-ds)]
     (create-db ds)
     (seed ds)))
 
-
 (defroutes app-routes
   (ANY "/" [] (fn [req] (println req) "Index of acme auth"))
   (POST "/create-auth-token" [] handlers/create-auth-token)
   (POST "/refresh-auth-token" [] handlers/refresh-auth-token)
   (POST "/invalidate-refresh-token" [] handlers/invalidate-refresh-token))
-
 
 (defn wrap-datasource [handler]
   (fn [req]

@@ -68,7 +68,8 @@
 
 
 (defn unsign-token [token]
-  (jws/unsign token (ks/public-key (io/resource "auth_pubkey.pem"))))
+  (println token)
+  (jws/unsign token (ks/public-key (io/resource "auth_pubkey.pem")) {:alg :rs256}))
 
 
 (defn wrap-auth-token [handler]

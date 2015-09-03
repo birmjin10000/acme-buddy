@@ -19,8 +19,6 @@
       {:status 201 :body res}
       {:status 401 :body res})))
 
-
-
 (defn invalidate-refresh-token [req]
   (let [refresh-token (-> req :params :refresh-token)
         [ok? res] (service/invalidate-refresh-token (:datasource req)
